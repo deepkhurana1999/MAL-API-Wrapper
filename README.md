@@ -1,1 +1,1 @@
-# MAL-API-Wrapper
+# PyMAL: MAL-API-Wrapper
