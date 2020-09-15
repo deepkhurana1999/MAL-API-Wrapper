@@ -9,24 +9,27 @@ class Authenticator(Session,Client):
 		self._client_details['key'] = credentials['client_secret']
 		
 	
-	def _PKCE_settor(self):
+	def __PKCE_settor(self):
 		token = secrets.token_urlsafe(100)
 		self._client_details['code_verifier'] = token[:128]
 		self._client_details['code_challenge'] = token[:128]
 
-	def _authorization(self) -> str:
-		url = 'https://myanimelist.net/v1/oauth2/authorize'
+	def __authorization(self) -> str:
+		url = 'https://myanimelist.net/v1/oauth2/authorize?'
 		params = {
 			'response_type':'code',
 			'client_id': self._client_details['id'],
 			'state':'RequestID',
 			'code_challenge': self._client_details['code_challenge']
 			}
-		return self._session.get(url,params=params).url
+		for key, value in params.items():
+			temp = key+'='+value if (key=='response_type') else '&'+key+'='+value
+			url = url + temp
+		return url
 	
-	def _access_token(self, auth_url: str):
+	def __access_token(self, auth_url: str):
 		url = 'https://myanimelist.net/v1/oauth2/token'
-		code = auth_url[auth_url.index('=')-1:auth_url.index('&')]
+		code = auth_url[auth_url.index('=')+1:auth_url.index('&')]
 		data = {
 			'client_id': self._client_details['id'],
 			'client_secret': self._client_details['key'],
@@ -47,3 +50,9 @@ class Authenticator(Session,Client):
 			}
 		response = self._session.post(url,data=data)
 		self._client_details['tokenRefresh'] = response.json()
+	
+	def start_session(self):
+		self.__PKCE_settor()
+		print('Visit the provided url for validation: ', self.__authorization())
+		authUrl = input('Enter the generated url: ')
+		self.__access_token(authUrl)
